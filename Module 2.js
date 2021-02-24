@@ -1,12 +1,17 @@
 let allTodos = [
-  {title: "1 second test todo", dueDate: "2/24/2021, 7:00:00 PM", description: "test", isComplete: false},
-  {title: "2 my new todo", dueDate: "2/17/2021, 7:00:00 PM", description: "test", isComplete: true},
-  {title: "3 second test todo", dueDate: "2/24/2021, 7:00:00 PM", description: "test", isComplete: false},
-  {title: "4 my new todo", dueDate: "2/17/2021, 7:00:00 PM", description: "test", isComplete: true},
-  {title: "5 second test todo", dueDate: "2/24/2021, 7:00:00 PM", description: "test", isComplete: false},
-  {title: "6 my new todo", dueDate: "2/17/2021, 7:00:00 PM", description: "test", isComplete: false},
+  {title: "1 second test todo", dueDate: "2/24/2021", description: "test", isComplete: false},
+  {title: "2 my new todo", dueDate: "2/17/2021", description: "test", isComplete: true},
+  {title: "3 second test todo", dueDate: "2/24/2021", description: "test", isComplete: false},
+  {title: "4 my new todo", dueDate: "2/17/2021", description: "test", isComplete: true},
+  {title: "5 second test todo", dueDate: "2/24/2021", description: "test", isComplete: false},
+  {title: "6 my new todo", dueDate: "2/17/2021", description: "test", isComplete: false},
 
   ];
+
+  let pendingTodos = []
+  let completedTodos = []
+  let expiredTodos = []
+
 
  // Expands the left menu - WORKS
 $('.left-drawer').click( function () {
@@ -39,21 +44,28 @@ function createTodoFromForm() {
  return createTodo
 }
 
-//Puts to-dos on the page and in the appropriate column (pending/completed) - WORKS
+
 
 function renderTodos() {
-  $('main .content').empty();
   
-  allTodos.forEach( function(todo) {
-   const toDoElement = createElementFromTodo(todo)
+  $("main .content").empty();
+  
+  pendingTodos.forEach((todo) => {
+    const builtToDo = createElementFromTodo(todo);
+    $(".pending-todos").append(builtToDo);
+  });
 
-   if (todo.isComplete) {
-   return $('.completed-todos').append(toDoElement)
+  completedTodos.forEach((todo) => {
+    const builtToDo = createElementFromTodo(todo);
+    $(".completed-todos").append(builtToDo);
+  });
 
-   } 
-   $('.pending-todos').append(toDoElement)
-})
+  expiredTodos.forEach((todo) => {
+    const builtToDo = createElementFromTodo(todo);
+    $(".expired-todos").append(builtToDo);
+  });
 }
+
 
 
 /// Creates a to-do on click - WORKS
@@ -62,6 +74,8 @@ $('.create-todo').click(function (event) {
 
   allTodos.unshift(createTodoFromForm())
   $('.modal').removeClass('open')
+  
+  splitTodos()
   renderTodos()
 
   $('.todo-form').trigger('reset')
@@ -88,35 +102,79 @@ $('.create-todo').click(function (event) {
 
     newTodoElement.data("todo", todo);
 
-
-    $('main').on('click', '.action.complete', function () {
-      const parentTodo = $(this).closest('.todo').data()
+// Eds solution below - caused error. Time ran out and we could not complete
+    // $('main').on('click', '.action.complete', function () {
+    //   const parentTodo = $(this).closest('.todo').data()
   
-     parentTodo.todo.isComplete = true
+    //  parentTodo.todo.isComplete = true
 
-      renderTodos();
+    //  renderTodos();
    
+    // });
 
+
+    $("main").on("click", ".action.complete", function () {
+      let parentTodo = $(this).closest(".todo");
+      
+      let todoData = parentTodo.data();
+      
+      todoData.todo.isComplete = true;
+      
+      parentTodo.slideUp(function () {
+        splitTodos();
+        renderTodos();
+      });
     });
 
 
     return newTodoElement;
-
-
-    
-  
   }
   
    
+  function isCurrent(todo) {
+    const todoDueDate = new Date(todo.dueDate);
+    const now = new Date();
+  
+    return now < todoDueDate;
+
+  }
 
 
+  function splitTodos() {
+    pendingTodos = allTodos.filter(function (todo) {
+      return !todo.isComplete && isCurrent(todo);
+    });
+   
+    completedTodos = allTodos.filter(function (todo) {
+      return todo.isComplete;
+    });
+
+    expiredTodos = allTodos.filter(function (todo) {
+      return !todo.isComplete && !isCurrent(todo);
+    });
+ 
+  }
 
 
+function storeData () {
+  localStorage.setItem('allTodos', JSON.stringify(allTodos))
+}
 
+function retrieveData () {
+  allTodos = JSON.parse(localStorage.getItem('allTodos')) || fetchDefaultTodos()
 
+}
 
+function fetchDefaultTodos () {
+  return  [
+    {title: "Get Food", dueDate: "2/24/2021", description: "test", isComplete: false},
+    {title: "Get Water", dueDate: "2/17/2021", description: "test", isComplete: true},
+    {title: "Get Gas", dueDate: "2/24/2021", description: "test", isComplete: false},
+    {title: "Get Cigs", dueDate: "2/17/2021", description: "test", isComplete: true},
+  
+    ];
+}
 
-
-
+splitTodos()
 
 renderTodos()
